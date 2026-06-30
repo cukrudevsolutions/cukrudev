@@ -3,17 +3,16 @@
 namespace Tests\Feature;
 
 // use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    /**
-     * A basic test example.
-     */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_unauthenticated_visitors_are_redirected_to_login(): void
     {
-        $response = $this->get('/');
+        $response = $this->followingRedirects()->get('/');
 
-        $response->assertStatus(200);
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page->component('Auth/Login'));
     }
 }
