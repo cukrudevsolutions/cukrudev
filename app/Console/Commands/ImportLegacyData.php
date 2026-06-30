@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ImportLegacyData extends Command
 {
@@ -40,14 +41,25 @@ class ImportLegacyData extends Command
     public function handle(): int
     {
         $legacy = DB::connection('legacy');
+        $staffImages = [];
 
-        DB::transaction(function () use ($legacy) {
+        DB::transaction(function () use ($legacy, &$staffImages) {
             DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
             foreach (self::TABLES as $table) {
-                $rows = $legacy->table($table)->get()->map(function ($row) {
+                $rows = $legacy->table($table)->get()->map(function ($row) use ($table, &$staffImages) {
                     $row = (array) $row;
-                    unset($row['profile_image_b64']);
+
+                    if ($table === 'staff_users') {
+                        // The legacy uploads/staff/ folder is empty on disk — profile_image_b64
+                        // in the DB is the *only* place these photos actually exist. Capture it
+                        // here so we can write real files to Laravel Storage after the transaction,
+                        // instead of silently losing every staff photo when we drop this column.
+                        if (! empty($row['profile_image_b64']) && ! empty($row['profile_image'])) {
+                            $staffImages[$row['profile_image']] = $row['profile_image_b64'];
+                        }
+                        unset($row['profile_image_b64']);
+                    }
 
                     return $row;
                 });
@@ -67,8 +79,40 @@ class ImportLegacyData extends Command
         });
 
         $this->newLine();
+        $this->migrateStaffImages($staffImages);
+
+        $this->newLine();
         $this->info('Import complete.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  array<string, string>  $staffImages  filename => "data:image/...;base64,...."
+     */
+    private function migrateStaffImages(array $staffImages): void
+    {
+        $written = 0;
+
+        foreach ($staffImages as $filename => $dataUri) {
+            if (! preg_match('/^data:([^;]+);base64,(.+)$/s', $dataUri, $m)) {
+                $this->warn("Skipping unrecognized image data for {$filename}");
+
+                continue;
+            }
+
+            $binary = base64_decode($m[2], true);
+
+            if ($binary === false) {
+                $this->warn("Failed to decode base64 image for {$filename}");
+
+                continue;
+            }
+
+            Storage::disk('public')->put('staff/'.$filename, $binary);
+            $written++;
+        }
+
+        $this->info(sprintf('staff profile images       %d files written to storage/app/public/staff', $written));
     }
 }

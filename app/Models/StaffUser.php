@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class StaffUser extends Authenticatable
 {
@@ -59,6 +61,51 @@ class StaffUser extends Authenticatable
     public function getAuthPassword(): string
     {
         return $this->password_hash;
+    }
+
+    public function avatarUrl(): ?string
+    {
+        if ($this->profile_image && Storage::disk('public')->exists('staff/'.$this->profile_image)) {
+            return Storage::disk('public')->url('staff/'.$this->profile_image);
+        }
+
+        return null;
+    }
+
+    public function initials(): string
+    {
+        $words = preg_split('/\s+/', trim($this->full_name)) ?: [];
+        $initials = '';
+
+        foreach (array_slice($words, 0, 2) as $word) {
+            $initials .= Str::upper(Str::substr($word, 0, 1));
+        }
+
+        return $initials !== '' ? $initials : '?';
+    }
+
+    public function whatsappLink(): ?string
+    {
+        if (! $this->whatsapp_number) {
+            return null;
+        }
+
+        return 'https://wa.me/'.preg_replace('/\D/', '', $this->whatsapp_number);
+    }
+
+    public static function safeUrl(?string $url): ?string
+    {
+        $url = trim((string) $url);
+
+        if ($url === '') {
+            return null;
+        }
+
+        if (! preg_match('#^https?://#i', $url)) {
+            $url = 'https://'.$url;
+        }
+
+        return filter_var($url, FILTER_VALIDATE_URL) ?: null;
     }
 
     public function tasksAssigned(): HasMany
