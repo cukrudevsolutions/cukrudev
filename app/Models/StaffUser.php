@@ -109,6 +109,21 @@ class StaffUser extends Authenticatable
         return filter_var($url, FILTER_VALIDATE_URL) ?: null;
     }
 
+    public static function sanitizeSlug(string $input): string
+    {
+        $slug = mb_strtolower(trim($input));
+        $slug = preg_replace('/[^a-z0-9_-]/', '', $slug);
+
+        return mb_substr($slug, 0, 80);
+    }
+
+    public static function isSlugTaken(string $slug, ?int $excludeId = null): bool
+    {
+        return self::where('slug', $slug)
+            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+            ->exists();
+    }
+
     public function tasksAssigned(): HasMany
     {
         return $this->hasMany(Task::class, 'assigned_to');

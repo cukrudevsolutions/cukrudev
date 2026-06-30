@@ -12,6 +12,9 @@ use App\Http\Controllers\Portal\EarningController;
 use App\Http\Controllers\Portal\GigController;
 use App\Http\Controllers\Portal\OfferController;
 use App\Http\Controllers\Portal\PointController;
+use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\MiddlemanController;
+use App\Http\Controllers\Admin\StaffController as AdminStaffController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -44,6 +47,20 @@ Route::middleware('auth')->prefix('portal')->name('portal.')->group(function () 
         Route::get('/dashboard', function () {
             return Inertia::render('Admin/Dashboard');
         })->name('dashboard');
+
+        Route::get('/middlemen', [MiddlemanController::class, 'index'])->name('middlemen.index');
+        Route::get('/middlemen-edit/{middleman?}', [MiddlemanController::class, 'edit'])->name('middlemen.edit');
+        Route::post('/middlemen-edit/{middleman?}', [MiddlemanController::class, 'store'])->name('middlemen.store');
+        Route::post('/middlemen/{middleman}/toggle-active', [MiddlemanController::class, 'toggleActive'])->name('middlemen.toggleActive');
+
+        Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+        Route::get('/clients-edit/{client?}', [ClientController::class, 'edit'])->name('clients.edit');
+        Route::post('/clients-edit/{client?}', [ClientController::class, 'store'])->name('clients.store');
+
+        Route::get('/staff', [AdminStaffController::class, 'index'])->name('staff.index');
+        Route::get('/staff-edit/{staff?}', [AdminStaffController::class, 'edit'])->name('staff.edit');
+        Route::post('/staff-edit/{staff?}', [AdminStaffController::class, 'store'])->name('staff.store');
+        Route::post('/staff/{staff}/toggle-active', [AdminStaffController::class, 'toggleActive'])->name('staff.toggleActive');
     });
 });
 

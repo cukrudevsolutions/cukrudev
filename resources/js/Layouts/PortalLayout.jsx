@@ -13,6 +13,9 @@ const staffNavItems = [
 
 const adminNavItems = [
     { label: 'Admin Dashboard', route: 'portal.admin.dashboard' },
+    { label: 'Clients', route: 'portal.admin.clients.index' },
+    { label: 'Staff', route: 'portal.admin.staff.index' },
+    { label: 'Middlemen', route: 'portal.admin.middlemen.index' },
 ];
 
 function isActive(routeName) {
