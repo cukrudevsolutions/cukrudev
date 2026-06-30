@@ -13,6 +13,7 @@ use App\Http\Controllers\Portal\GigController;
 use App\Http\Controllers\Portal\OfferController;
 use App\Http\Controllers\Portal\PointController;
 use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\InquiryController as AdminInquiryController;
 use App\Http\Controllers\Admin\MiddlemanController;
 use App\Http\Controllers\Admin\StaffController as AdminStaffController;
 use Illuminate\Support\Facades\Route;
@@ -61,6 +62,9 @@ Route::middleware('auth')->prefix('portal')->name('portal.')->group(function () 
         Route::get('/staff-edit/{staff?}', [AdminStaffController::class, 'edit'])->name('staff.edit');
         Route::post('/staff-edit/{staff?}', [AdminStaffController::class, 'store'])->name('staff.store');
         Route::post('/staff/{staff}/toggle-active', [AdminStaffController::class, 'toggleActive'])->name('staff.toggleActive');
+
+        Route::get('/inquiries', [AdminInquiryController::class, 'index'])->name('inquiries.index');
+        Route::post('/inquiries', [AdminInquiryController::class, 'updateStatus'])->name('inquiries.updateStatus');
     });
 });
 

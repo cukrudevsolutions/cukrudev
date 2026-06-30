@@ -16,6 +16,7 @@ const adminNavItems = [
     { label: 'Clients', route: 'portal.admin.clients.index' },
     { label: 'Staff', route: 'portal.admin.staff.index' },
     { label: 'Middlemen', route: 'portal.admin.middlemen.index' },
+    { label: 'Inquiries', route: 'portal.admin.inquiries.index' },
 ];
 
 function isActive(routeName) {
