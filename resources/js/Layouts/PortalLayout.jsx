@@ -3,14 +3,24 @@ import { Link, usePage } from '@inertiajs/react';
 
 const staffNavItems = [
     { label: 'Dashboard', route: 'portal.dashboard' },
+    { label: 'My Card', route: 'portal.card.show' },
+    { label: 'My Contracts', route: 'portal.contracts.index' },
+    { label: 'My Gigs', route: 'portal.gigs.index' },
+    { label: 'Offers', route: 'portal.offers.index', badge: true },
+    { label: 'My Points', route: 'portal.points.index' },
+    { label: 'Earnings', route: 'portal.earnings.index' },
 ];
 
 const adminNavItems = [
     { label: 'Admin Dashboard', route: 'portal.admin.dashboard' },
 ];
 
+function isActive(routeName) {
+    return route().current(routeName) || route().current(routeName + '.*');
+}
+
 export default function PortalLayout({ header, children }) {
-    const { auth, flash } = usePage().props;
+    const { auth, flash, pendingOffersCount } = usePage().props;
     const user = auth.user;
 
     return (
@@ -27,13 +37,18 @@ export default function PortalLayout({ header, children }) {
                         <Link
                             key={item.route}
                             href={route(item.route)}
-                            className={`block rounded px-3 py-2 text-sm font-medium ${
-                                route().current(item.route)
+                            className={`flex items-center justify-between rounded px-3 py-2 text-sm font-medium ${
+                                isActive(item.route)
                                     ? 'bg-gray-800 text-white'
                                     : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                             }`}
                         >
-                            {item.label}
+                            <span>{item.label}</span>
+                            {item.badge && pendingOffersCount > 0 && (
+                                <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-gray-900">
+                                    {pendingOffersCount}
+                                </span>
+                            )}
                         </Link>
                     ))}
 
@@ -47,7 +62,7 @@ export default function PortalLayout({ header, children }) {
                                     key={item.route}
                                     href={route(item.route)}
                                     className={`block rounded px-3 py-2 text-sm font-medium ${
-                                        route().current(item.route)
+                                        isActive(item.route)
                                             ? 'bg-gray-800 text-white'
                                             : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                                     }`}

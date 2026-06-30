@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\TaskOffer;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -38,6 +39,9 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'pendingOffersCount' => fn () => $request->user()
+                ? TaskOffer::where('offered_to', $request->user()->id)->where('response', 'pending')->count()
+                : 0,
         ];
     }
 }

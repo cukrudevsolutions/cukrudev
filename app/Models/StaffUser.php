@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -149,5 +150,40 @@ class StaffUser extends Authenticatable
             ->using(ProjectContributor::class)
             ->withPivot('role', 'dev_share_pct')
             ->withTimestamps();
+    }
+
+    /**
+     * All active staff ranked by opportunity points ascending (fewest points = rank 1 =
+     * next in line for a gig offer), tie-broken by id — mirrors the legacy fair-rotation rule.
+     *
+     * @return \Illuminate\Support\Collection<int, array{id:int,full_name:string,total_points:int,rank:int}>
+     */
+    public static function rankedByPoints(): \Illuminate\Support\Collection
+    {
+        $pointsByUser = DB::table('tasks')
+            ->select('assigned_to', DB::raw('COALESCE(SUM(task_point), 0) as total_points'))
+            ->whereNotNull('assigned_to')
+            ->whereIn('status', Task::POINT_STATUSES)
+            ->groupBy('assigned_to')
+            ->pluck('total_points', 'assigned_to');
+
+        return self::where('is_active', true)
+            ->orderBy('id')
+            ->get(['id', 'full_name'])
+            ->map(fn ($staff) => [
+                'id' => $staff->id,
+                'full_name' => $staff->full_name,
+                'total_points' => (int) ($pointsByUser[$staff->id] ?? 0),
+            ])
+            ->sortBy([
+                ['total_points', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->values()
+            ->map(function ($row, $index) {
+                $row['rank'] = $index + 1;
+
+                return $row;
+            });
     }
 }

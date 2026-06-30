@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
+    /** Statuses that count toward opportunity points — accepted and onward. */
+    public const POINT_STATUSES = ['accepted', 'in_progress', 'submitted', 'revision', 'completed', 'paid'];
+
     protected $fillable = [
         'project_id', 'client_id', 'title', 'description', 'repo_url', 'task_type',
         'task_point', 'task_value', 'middleman_applies', 'middleman_id', 'assigned_to',
@@ -56,5 +60,15 @@ class Task extends Model
     public function opportunityPoints(): HasMany
     {
         return $this->hasMany(OpportunityPoint::class);
+    }
+
+    public function scopeAssignedTo(Builder $query, int $userId): Builder
+    {
+        return $query->where('assigned_to', $userId);
+    }
+
+    public function scopeCountingTowardPoints(Builder $query): Builder
+    {
+        return $query->whereIn('status', self::POINT_STATUSES);
     }
 }
