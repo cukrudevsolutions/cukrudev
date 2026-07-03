@@ -1,5 +1,17 @@
 import { Head, useForm } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+function makeStars(count) {
+    return Array.from({ length: count }, (_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        size: Math.random() < 0.25 ? 2.5 : Math.random() < 0.6 ? 1.8 : 1.2,
+        duration: 2.4 + Math.random() * 3.2,
+        delay: Math.random() * 5,
+        depth: Math.random() < 0.5 ? 'near' : 'far',
+    }));
+}
 
 const PROJECT_TYPES = [
     'Website / Landing Page',
@@ -21,49 +33,127 @@ const SERVICES = [
 ];
 
 const FEATURES = [
-    { title: 'Development', desc: 'Built on modern tech stacks with clean architecture — so your product scales effortlessly as your business grows.' },
-    { title: 'Customization', desc: 'No templates. Every build is handcrafted around your brand identity, business workflow, and customer journey.' },
-    { title: 'Adaptable', desc: 'Future-proof solutions that grow with your team, adapt to new requirements, and stay relevant as your business evolves.' },
-    { title: 'Authorization', desc: 'Enterprise-grade authentication, role-based access, and encrypted data protection across every module and user level.' },
-    { title: 'Management', desc: 'Powerful admin panels, real-time dashboards, and smart reporting tools to give you full control over your operations.' },
-    { title: 'Integration', desc: 'Seamlessly connect payment gateways, WhatsApp, AI engines, and any third-party API into one unified system.' },
+    {
+        title: 'Development',
+        desc: 'Built on modern tech stacks with clean architecture — so your product scales effortlessly as your business grows.',
+        icon: <><polyline points="8 6 2 12 8 18" /><polyline points="16 6 22 12 16 18" /></>,
+    },
+    {
+        title: 'Customization',
+        desc: 'No templates. Every build is handcrafted around your brand identity, business workflow, and customer journey.',
+        icon: <>
+            <line x1="4" y1="6" x2="20" y2="6" /><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none" />
+            <line x1="4" y1="12" x2="20" y2="12" /><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none" />
+            <line x1="4" y1="18" x2="20" y2="18" /><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none" />
+        </>,
+    },
+    {
+        title: 'Adaptable',
+        desc: 'Future-proof solutions that grow with your team, adapt to new requirements, and stay relevant as your business evolves.',
+        icon: <><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></>,
+    },
+    {
+        title: 'Authorization',
+        desc: 'Enterprise-grade authentication, role-based access, and encrypted data protection across every module and user level.',
+        icon: <><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z" /><polyline points="9 12 11 14 15 10" /></>,
+    },
+    {
+        title: 'Management',
+        desc: 'Powerful admin panels, real-time dashboards, and smart reporting tools to give you full control over your operations.',
+        icon: <><rect x="3" y="12" width="4" height="8" /><rect x="10" y="7" width="4" height="13" /><rect x="17" y="3" width="4" height="17" /></>,
+    },
+    {
+        title: 'Integration',
+        desc: 'Seamlessly connect payment gateways, WhatsApp, AI engines, and any third-party API into one unified system.',
+        icon: <><path d="M10 13a5 5 0 0 0 7.07 0l1.93-1.93a5 5 0 0 0-7.07-7.07L10.5 5.43" /><path d="M14 11a5 5 0 0 0-7.07 0L5 12.93a5 5 0 0 0 7.07 7.07L13.5 18.57" /></>,
+    },
 ];
+
+// Real WhatsApp brand glyph (outer bubble + inner handset detail), viewBox 0 0 448 512.
+const WHATSAPP_VIEWBOX = '0 0 448 512';
+const WHATSAPP_PATH = 'M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z';
 
 const TRUST_GROUPS = [
     {
         category: 'Management',
         items: [
-            { title: 'Discussions & Planning', desc: 'Direct communication with our team from kickoff to launch — no middlemen, no miscommunication.' },
-            { title: 'Team Collaboration', desc: "Shared updates, milestone reviews, and full project visibility — you'll always know exactly where things stand." },
-            { title: 'Proven Delivery', desc: 'Clean code, structured handover docs, and post-launch support — every project ships production-ready.' },
+            {
+                title: 'Discussions & Planning',
+                desc: 'Direct communication with our team from kickoff to launch — no middlemen, no miscommunication.',
+                icon: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />,
+            },
+            {
+                title: 'Team Collaboration',
+                desc: "Shared updates, milestone reviews, and full project visibility — you'll always know exactly where things stand.",
+                icon: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+            },
+            {
+                title: 'Proven Delivery',
+                desc: 'Clean code, structured handover docs, and post-launch support — every project ships production-ready.',
+                icon: <><circle cx="12" cy="8" r="6" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" /></>,
+            },
         ],
     },
     {
         category: 'Integration',
         items: [
-            { title: 'Online Payment', desc: 'Accept payments seamlessly via Billplz, Stripe, or any gateway tailored to your market and customers.' },
-            { title: 'WhatsApp & Notifications', desc: 'Automate customer and team updates through WhatsApp, email alerts, and real-time in-app notifications.' },
-            { title: 'Artificial Intelligence', desc: 'Supercharge your system with AI — from smart automation to intelligent predictions that give you a competitive edge.' },
+            {
+                title: 'Online Payment',
+                desc: 'Accept payments seamlessly via Billplz, Stripe, or any gateway tailored to your market and customers.',
+                icon: <><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></>,
+            },
+            {
+                title: 'WhatsApp & Notifications',
+                desc: 'Automate customer and team updates through WhatsApp, email alerts, and real-time in-app notifications.',
+                filled: true,
+                iconClass: 'wa',
+                viewBox: WHATSAPP_VIEWBOX,
+                icon: <path d={WHATSAPP_PATH} />,
+            },
+            {
+                title: 'Artificial Intelligence',
+                desc: 'Supercharge your system with AI — from smart automation to intelligent predictions that give you a competitive edge.',
+                icon: <>
+                    <rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" />
+                    <line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" />
+                    <line x1="9" y1="20" x2="9" y2="23" /><line x1="15" y1="20" x2="15" y2="23" />
+                    <line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="14" x2="23" y2="14" />
+                    <line x1="1" y1="9" x2="4" y2="9" /><line x1="1" y1="14" x2="4" y2="14" />
+                </>,
+            },
         ],
     },
     {
         category: 'Security & Privacy',
         items: [
-            { title: 'Data Security', desc: 'Security is built into every layer of development — your data stays protected from day one to production.' },
-            { title: 'Quality Assurance', desc: 'Rigorous testing ensures your system performs flawlessly under real-world conditions before going live.' },
-            { title: 'Data Import/Export', desc: 'Move data in and out effortlessly with flexible import/export tools built for your operational needs.' },
+            {
+                title: 'Data Security',
+                desc: 'Security is built into every layer of development — your data stays protected from day one to production.',
+                icon: <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z" />,
+            },
+            {
+                title: 'Quality Assurance',
+                desc: 'Rigorous testing ensures your system performs flawlessly under real-world conditions before going live.',
+                icon: <><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /><polyline points="9 14 11 16 15 11" /></>,
+            },
+            {
+                title: 'Data Import/Export',
+                desc: 'Move data in and out effortlessly with flexible import/export tools built for your operational needs.',
+                icon: <><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></>,
+            },
         ],
     },
 ];
 
 const TEAM = [
-    { name: 'MUHAMMAD ALIEFF BIN ROMIZA', title: 'Chief Executive Officer', lead: true },
-    { name: 'MUHAMMAD AKMAL BIN MOHD RASHID', title: 'Chief Technology Officer' },
-    { name: 'MUHAMMAD ALIF AIMAN BIN AZHAR', title: 'Chief Financial Officer' },
-    { name: 'MUHAMMAD FAIQ BIN ISHAM', title: 'Marketing & Growth Lead' },
-    { name: 'MUHAMMAD AMMAR BIN AZIZAN', title: 'Software Engineer' },
-    { name: 'MUHAMMAD HIZBU FARHAN BIN ALIAS', title: 'Software Engineer' },
-    { name: 'MUHAMAD ADLI FARRIZ BIN AZLI', title: 'Software Engineer' },
+    { name: 'MUHAMMAD ALIEFF BIN ROMIZA', title: 'General Manager', lead: true },
+    { name: 'MUHAMMAD AKMAL BIN MOHD RASHID', title: 'Technical Manager' },
+    { name: 'MUHAMMAD ALIF AIMAN BIN AZHAR', title: 'Account & Finance Manager' },
+    { name: 'MUHAMMAD FAIQ BIN ISHAM', title: 'Sales & Marketing Manager' },
+    { name: 'MUHAMMAD AMMAR BIN AZIZAN', title: 'Logistic Manager' },
+    { name: 'MUHAMAD ADLI FARRIZ BIN AZLI', title: 'HR & Admin Manager' },
+    { name: 'MUHAMMAD HIZBU FARHAN BIN ALIAS', title: 'Technical Executive' },
+    { name: 'MEOR MUHAMMAD ANUAR FIRDAUS BIN AINOL SALLEH', title: 'Sales & Marketing Executive' },
 ];
 
 const REVIEWS = [
@@ -138,6 +228,11 @@ export default function Home() {
     const [bubbleIndex, setBubbleIndex] = useState(0);
     const heroGlowRef = useRef(null);
     const servicesOrbRef = useRef(null);
+    const starsNearRef = useRef(null);
+    const starsFarRef = useRef(null);
+    const stars = useMemo(() => makeStars(70), []);
+    const starsNear = useMemo(() => stars.filter((s) => s.depth === 'near'), [stars]);
+    const starsFar = useMemo(() => stars.filter((s) => s.depth === 'far'), [stars]);
 
     useReveal();
 
@@ -182,6 +277,12 @@ export default function Home() {
                 if (servicesOrbRef.current) {
                     servicesOrbRef.current.style.transform = `rotateY(${cx * 12}deg) rotateX(${-cy * 8}deg)`;
                 }
+                if (starsNearRef.current) {
+                    starsNearRef.current.style.transform = `translate(${cx * -22}px, ${cy * -16}px)`;
+                }
+                if (starsFarRef.current) {
+                    starsFarRef.current.style.transform = `translate(${cx * -10}px, ${cy * -7}px)`;
+                }
 
                 ticking = false;
             });
@@ -190,6 +291,21 @@ export default function Home() {
         document.addEventListener('mousemove', onMouseMove);
 
         return () => document.removeEventListener('mousemove', onMouseMove);
+    }, []);
+
+    useEffect(() => {
+        const onCardMove = (e) => {
+            const card = e.target.closest('.spotlight-card');
+            if (!card) return;
+
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+            card.style.setProperty('--my', `${e.clientY - rect.top}px`);
+        };
+
+        document.addEventListener('pointermove', onCardMove);
+
+        return () => document.removeEventListener('pointermove', onCardMove);
     }, []);
 
     function submit(e) {
@@ -203,18 +319,17 @@ export default function Home() {
 
     return (
         <>
+            {/* Title, meta description, OG/Twitter tags, fonts, and landing.css are all
+                rendered server-side from app.blade.php (scoped to the home route) so
+                they're part of the very first HTML response — Inertia's <Head> only
+                injects tags client-side after React hydrates, which crawlers/link-preview
+                bots wouldn't see and also caused a flash of unstyled content on load. */}
             <Head>
-                <title>CukruDev Solutions | Website Development, Web System & Mobile App Malaysia</title>
-                <meta name="description" content="CukruDev Solutions — premium website design, web systems, mobile apps, and AI automation built for businesses in Malaysia that want to grow and convert." />
                 <link rel="icon" type="image/png" href="/images/favicon.png" />
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-                <link rel="stylesheet" href="/css/landing.css" />
             </Head>
 
             <header className={`site-header${scrolled ? ' scrolled' : ''}`}>
-                <nav className="navbar container">
+                <nav className="navbar ldg-container">
                     <a className="brand" href="#home" aria-label="CukruDev home">
                         <img src="/images/footer-logo-white.png" alt="CukruDev logo" className="brand-logo" />
                         <span>Cukru<span>Dev</span></span>
@@ -242,12 +357,46 @@ export default function Home() {
             <main id="home">
                 <section className="hero">
                     <div className="hero-particles" aria-hidden="true"></div>
+                    <div className="hero-stars hero-stars-far" ref={starsFarRef} aria-hidden="true">
+                        {starsFar.map((s) => (
+                            <span
+                                key={s.id}
+                                className="star"
+                                style={{
+                                    left: `${s.left}%`,
+                                    top: `${s.top}%`,
+                                    width: s.size,
+                                    height: s.size,
+                                    animationDuration: `${s.duration}s`,
+                                    animationDelay: `${s.delay}s`,
+                                }}
+                            />
+                        ))}
+                    </div>
+                    <div className="hero-stars hero-stars-near" ref={starsNearRef} aria-hidden="true">
+                        {starsNear.map((s) => (
+                            <span
+                                key={s.id}
+                                className="star"
+                                style={{
+                                    left: `${s.left}%`,
+                                    top: `${s.top}%`,
+                                    width: s.size,
+                                    height: s.size,
+                                    animationDuration: `${s.duration}s`,
+                                    animationDelay: `${s.delay}s`,
+                                }}
+                            />
+                        ))}
+                        <span className="shooting-star ss1" />
+                        <span className="shooting-star ss2" />
+                    </div>
                     <div className="hero-glow" ref={heroGlowRef} aria-hidden="true"></div>
-                    <div className="container">
+                    <div className="ldg-container">
                         <div className="hero-center reveal">
                             <span className="hero-badge">PREMIUM DIGITAL SOLUTIONS IN MALAYSIA</span>
-                            <h1>Build Smarter.<br />Launch Faster.</h1>
-                            <p className="hero-sub">We design and develop high-performance websites, web systems, mobile apps, and automation tools that help your business grow and convert.</p>
+                            <h1>Launch a website that makes people <span className="grad-text">trust your brand</span> faster.</h1>
+                            <p className="hero-sub">CukruDev Solutions designs and builds sharp websites, business systems, mobile apps, dashboards, and automation tools with a polished brand-first approach.</p>
                             <div className="hero-actions">
                                 <a href="#contact" className="btn btn-hero-primary">Get Started &rarr;</a>
                                 <a href="#services" className="btn btn-hero-ghost">Explore Services &#10022;</a>
@@ -257,7 +406,7 @@ export default function Home() {
                 </section>
 
                 <section className="services section" id="services">
-                    <div className="container services-layout">
+                    <div className="ldg-container services-layout">
                         <div className="services-left reveal">
                             <p className="eyebrow">Our Services</p>
                             <h2>Everything you need to go digital — in one place</h2>
@@ -301,7 +450,7 @@ export default function Home() {
                 </section>
 
                 <section className="fss section">
-                    <div className="container">
+                    <div className="ldg-container">
                         <div className="fss-head reveal">
                             <h2 className="fss-title">Faster. Smarter. Secure.</h2>
                             <p>Every project is engineered for speed, intelligence, and enterprise-grade security — so your brand performs at its best from day one.</p>
@@ -338,12 +487,12 @@ export default function Home() {
                 </section>
 
                 <section className="feat-grid-section section">
-                    <div className="container feat-grid reveal">
+                    <div className="ldg-container feat-grid reveal">
                         {FEATURES.map((f) => (
-                            <div className="feat-item" key={f.title}>
+                            <div className="feat-item spotlight-card" key={f.title}>
                                 <div className="feat-icon">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="16 18 22 12 16 6" />
+                                        {f.icon}
                                     </svg>
                                 </div>
                                 <h4>{f.title}</h4>
@@ -354,7 +503,7 @@ export default function Home() {
                 </section>
 
                 <section className="trust section">
-                    <div className="container">
+                    <div className="ldg-container">
                         <div className="trust-head reveal">
                             <h2>Why businesses choose CukruDev</h2>
                             <p>We don't just build products — we become your technical partner. From discovery to delivery, your project gets full commitment and zero shortcuts.</p>
@@ -366,10 +515,14 @@ export default function Home() {
                                 <div className="trust-row">
                                     {group.items.map((item) => (
                                         <div className="trust-item" key={item.title}>
-                                            <div className="trust-icon">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                                    <circle cx="12" cy="12" r="9" />
-                                                </svg>
+                                            <div className={`trust-icon${item.iconClass ? ` ${item.iconClass}` : ''}`}>
+                                                {item.filled ? (
+                                                    <svg viewBox={item.viewBox ?? '0 0 24 24'} fill="currentColor">{item.icon}</svg>
+                                                ) : (
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        {item.icon}
+                                                    </svg>
+                                                )}
                                             </div>
                                             <h4>{item.title}</h4>
                                             <p>{item.desc}</p>
@@ -382,7 +535,7 @@ export default function Home() {
                 </section>
 
                 <section className="cta-band section">
-                    <div className="container cta-band-inner reveal">
+                    <div className="ldg-container cta-band-inner reveal">
                         <div className="cta-band-copy">
                             <p className="eyebrow">Ready to make the move?</p>
                             <h2>Let's Digitize Your Business</h2>
@@ -393,7 +546,7 @@ export default function Home() {
                 </section>
 
                 <section className="team section" id="about">
-                    <div className="container">
+                    <div className="ldg-container">
                         <div className="about-layout">
                             <div className="section-copy about-story reveal">
                                 <p className="eyebrow">About CukruDev</p>
@@ -411,12 +564,12 @@ export default function Home() {
                         <div className="team-grid reveal">
                             {TEAM.map((member) => (
                                 member.lead ? (
-                                    <article className="team-lead" key={member.name}>
+                                    <article className="team-lead spotlight-card" key={member.name}>
                                         <h3>{member.name}</h3>
                                         <p>{member.title}</p>
                                     </article>
                                 ) : (
-                                    <article key={member.name}>
+                                    <article className="spotlight-card" key={member.name}>
                                         <h3>{member.name}</h3>
                                         <p>{member.title}</p>
                                     </article>
@@ -427,7 +580,7 @@ export default function Home() {
                 </section>
 
                 <section className="reviews section" id="reviews">
-                    <div className="container">
+                    <div className="ldg-container">
                         <div className="section-copy centered reveal">
                             <p className="eyebrow">Client feedback</p>
                             <h2>Real results. Real feedback.</h2>
@@ -440,7 +593,7 @@ export default function Home() {
                             <div className="review-window">
                                 <div className="review-track" style={{ transform: `translateX(-${activeReview * 100}%)` }}>
                                     {REVIEWS.map((r) => (
-                                        <article className="review-card" key={r.name}>
+                                        <article className="review-card spotlight-card" key={r.name}>
                                             <div className="stars" aria-label="5 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
                                             <p>"{r.quote}"</p>
                                             <div className="reviewer">
@@ -471,7 +624,7 @@ export default function Home() {
                 </section>
 
                 <section className="contact section" id="contact">
-                    <div className="container contact-layout">
+                    <div className="ldg-container contact-layout">
                         <div className="contact-copy reveal">
                             <p className="eyebrow">Let's talk</p>
                             <h2>Tell us what you want to build.</h2>
@@ -545,7 +698,7 @@ export default function Home() {
             </main>
 
             <footer className="footer">
-                <div className="container footer-grid">
+                <div className="ldg-container footer-grid">
                     <div>
                         <a className="brand footer-brand" href="#home">
                             <img src="/images/footer-logo-white.png" alt="CukruDev logo" className="brand-logo" />
@@ -580,7 +733,7 @@ export default function Home() {
                         </ul>
                     </div>
                 </div>
-                <div className="container footer-bottom">
+                <div className="ldg-container footer-bottom">
                     <p>&copy; {new Date().getFullYear()} CukruDev Solutions. All rights reserved.</p>
                 </div>
             </footer>
@@ -588,8 +741,8 @@ export default function Home() {
             <div className="wa-widget">
                 <div className="wa-bubble" aria-live="polite">{WA_BUBBLE_MESSAGES[bubbleIndex]}</div>
                 <a href="https://wa.me/60147978792?text=Hi%20CukruDev%2C%20I%20would%20like%20to%20get%20a%20quotation." target="_blank" rel="noopener noreferrer" className="wa-float" aria-label="Chat on WhatsApp">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M20.52 3.48A11.86 11.86 0 0 0 12.08 0C5.55 0 .24 5.3.24 11.84c0 2.08.54 4.11 1.56 5.9L0 24l6.45-1.7a11.78 11.78 0 0 0 5.63 1.44h.01c6.53 0 11.84-5.3 11.84-11.84 0-3.16-1.23-6.13-3.41-8.42zM12.09 21.7h-.01a9.77 9.77 0 0 1-4.98-1.36l-.36-.21-3.83 1 1.02-3.73-.24-.38a9.77 9.77 0 0 1-1.5-5.18c0-5.39 4.39-9.78 9.79-9.78 2.61 0 5.07 1.02 6.92 2.88a9.72 9.72 0 0 1 2.86 6.9c0 5.39-4.39 9.78-9.77 9.78z" />
+                    <svg viewBox={WHATSAPP_VIEWBOX} aria-hidden="true">
+                        <path d={WHATSAPP_PATH} />
                     </svg>
                 </a>
             </div>
