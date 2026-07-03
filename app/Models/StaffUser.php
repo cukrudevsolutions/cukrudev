@@ -163,8 +163,7 @@ class StaffUser extends Authenticatable
     {
         return $this->belongsToMany(Project::class, 'project_contributors', 'user_id', 'project_id')
             ->using(ProjectContributor::class)
-            ->withPivot('role', 'dev_share_pct')
-            ->withTimestamps();
+            ->withPivot('role', 'dev_share_pct');
     }
 
     /**

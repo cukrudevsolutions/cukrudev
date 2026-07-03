@@ -13,10 +13,15 @@ const staffNavItems = [
 
 const adminNavItems = [
     { label: 'Admin Dashboard', route: 'portal.admin.dashboard' },
+    { label: 'Projects', route: 'portal.admin.projects.index' },
+    { label: 'Tasks', route: 'portal.admin.tasks.index' },
     { label: 'Clients', route: 'portal.admin.clients.index' },
     { label: 'Staff', route: 'portal.admin.staff.index' },
     { label: 'Middlemen', route: 'portal.admin.middlemen.index' },
     { label: 'Inquiries', route: 'portal.admin.inquiries.index' },
+    { label: 'Points', route: 'portal.admin.points.index' },
+    { label: 'Activity Log', route: 'portal.admin.activityLog.index' },
+    { label: 'Distribution Settings', route: 'portal.admin.paymentCategories.index' },
 ];
 
 function isActive(routeName) {

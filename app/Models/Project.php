@@ -50,8 +50,7 @@ class Project extends Model
     {
         return $this->belongsToMany(StaffUser::class, 'project_contributors', 'project_id', 'user_id')
             ->using(ProjectContributor::class)
-            ->withPivot('role', 'dev_share_pct')
-            ->withTimestamps();
+            ->withPivot('role', 'dev_share_pct');
     }
 
     public function distributions(): HasMany

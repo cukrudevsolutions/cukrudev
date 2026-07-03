@@ -11,6 +11,11 @@ class OpportunityPoint extends Model
 
     protected $fillable = ['task_id', 'user_id', 'point', 'reason'];
 
+    protected function casts(): array
+    {
+        return ['created_at' => 'datetime'];
+    }
+
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);

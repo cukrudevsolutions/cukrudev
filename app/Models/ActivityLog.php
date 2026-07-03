@@ -11,6 +11,11 @@ class ActivityLog extends Model
 
     protected $fillable = ['user_id', 'action', 'module', 'description'];
 
+    protected function casts(): array
+    {
+        return ['created_at' => 'datetime'];
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(StaffUser::class, 'user_id');
